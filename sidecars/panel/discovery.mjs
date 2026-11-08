@@ -75,7 +75,7 @@ export async function discoverProcesses({ platform = process.platform, run = exe
     if(missing.length){
       // One asynchronous fallback for all missing candidates, never a shell
       // per process or an unverified log-only port paired with a credential.
-      const script=`$pulsePids = @(${missing.join(',')}); Get-NetTCPConnection -State Listen -ErrorAction Stop | Where-Object { $pulsePids -contains $_.OwningProcess } | Select-Object OwningProcess,LocalPort | ConvertTo-Json -Compress`;
+      const script=`$pulsePids = @(${missing.join(',')}); Get-NetTCPConnection -ErrorAction Stop | Where-Object { $pulsePids -contains $_.OwningProcess -and ($_.State -eq 'Listen' -or $_.RemoteAddress -eq '0.0.0.0' -or $_.RemotePort -eq 0) } | Select-Object OwningProcess,LocalPort | ConvertTo-Json -Compress`;
       try{
         const {stdout}=await run('powershell.exe',['-NoProfile','-NonInteractive','-Command',script],{windowsHide:true,timeout:8000,maxBuffer:1048576});
         const value=stdout.trim()?JSON.parse(stdout.replace(/^\uFEFF/,'')):[];
